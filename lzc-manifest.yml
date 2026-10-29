@@ -1,0 +1,73 @@
+application:
+  subdomain: prowlarr
+  multi_instance: false
+  public_path:
+    - /
+  upstreams:
+    - location: /
+      backend: http://prowlarr:9696/
+  injects:
+    # 三阶段免密登录：首次打开设置账号时捕获凭据，之后自动填充
+    - id: capture-credentials
+      on: request
+      auth_required: false
+      when:
+        - /ping
+        - /api/v1/auth
+        - /login
+      do: |
+        const payload = ctx.body.getJSON();
+        const user = payload && (payload.username || payload.user);
+        if (user && payload.password) {
+          ctx.flow.set("pending_user", String(user));
+          ctx.flow.set("pending_pass", String(payload.password));
+        }
+    - id: persist-credentials
+      on: response
+      auth_required: false
+      when:
+        - /ping
+        - /api/v1/auth
+        - /login
+      do: |
+        if (ctx.status >= 200 && ctx.status < 300) {
+          const user = ctx.flow.get("pending_user");
+          const pass = ctx.flow.get("pending_pass");
+          if (user && pass) {
+            ctx.persist.set("saved_user", user);
+            ctx.persist.set("saved_pass", pass);
+          }
+        }
+    - id: autofill-login
+      when:
+        - /
+        - /login
+      do:
+        - src: builtin://simple-inject-password
+          params:
+            user:
+              $persist: saved_user
+            password:
+              $persist: saved_pass
+
+services:
+  prowlarr:
+    # upstream: lscr.io/linuxserver/prowlarr:2.7.0（ghcr.io/linuxserver/prowlarr 同源镜像）
+    image: ghcr.1ms.run/linuxserver/prowlarr:2.7.0
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Shanghai
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9696/ping >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    binds:
+      - /lzcapp/var/config:/config
+
+usage: |
+  Prowlarr 是索引管理器：统一管理和同步 Radarr、Sonarr、Lidarr 等下载工具的站点索引。
+  首次打开需设置管理员账号（免密登录会记住首次凭据）。
+  索引站配置请自行添加，并遵守站点规则。

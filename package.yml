@@ -1,0 +1,18 @@
+package: community.lazycat.app.prowlarr
+version: 2.7.0
+name: Prowlarr
+description: Indexer manager and proxy integrating with Lidarr, Mylar, Radarr, Readarr and Sonarr
+min_os_version: "1.5.0"
+homepage: https://github.com/Prowlarr/Prowlarr
+author: Prowlarr
+license: GPL-3.0
+permissions:
+  required:
+    - net.internet
+locales:
+  zh:
+    name: Prowlarr
+    description: 索引管理器与代理，统一管理 Radarr/Sonarr/Lidarr 等工具的站点索引
+  en:
+    name: Prowlarr
+    description: Indexer manager and proxy integrating with Lidarr, Mylar, Radarr, Readarr and Sonarr
