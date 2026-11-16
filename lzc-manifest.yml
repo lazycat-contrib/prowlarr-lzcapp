@@ -51,8 +51,8 @@ application:
               $persist: saved_pass
 services:
   prowlarr:
-    # upstream: ghcr.io/linuxserver/prowlarr:2.7.0
-    image: ghcr.1ms.run/linuxserver/prowlarr:2.7.0
+    # upstream: ghcr.io/linuxserver/prowlarr:3.0.2
+    image: ghcr.1ms.run/linuxserver/prowlarr:3.0.2
     environment:
       - PUID=1000
       - PGID=1000
